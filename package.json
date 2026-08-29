@@ -1,19 +1,21 @@
 {
-  "name": "claude-together",
+  "name": "session-multiplayer",
   "version": "0.3.0",
-  "description": "Serverless P2P session multiplayer for Claude Code — an MCP server over Hyperswarm",
+  "description": "Serverless P2P session multiplayer for AI coding agents — one MCP server, any harness: Claude Code, Codex, or anything that speaks MCP",
   "type": "module",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "register": "node scripts/register.js",
+    "register": "node adapters/register.js",
+    "register:claude": "node adapters/claude-code/register.js",
+    "register:codex": "node adapters/codex/register.js",
     "test": "node test/scope.js && node test/smoke.js",
     "test:security": "node test/security.js",
     "test:live": "node test/live.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/wybe-labs/claude-together.git"
+    "url": "git+https://github.com/wybe-labs/session-multiplayer.git"
   },
   "license": "MIT",
   "dependencies": {

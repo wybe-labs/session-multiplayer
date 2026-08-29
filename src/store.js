@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import b4a from 'b4a'
-import { scopedDir, identityFile } from './scope.js'
+import { scopedDir, identityFile, overrideDir } from './scope.js'
 import { signKeyPair } from './crypto.js'
 
 const LOG_REPLAY_MAX = 200
@@ -18,12 +18,12 @@ const SEEN_COMPACT_AT = 60_000
 // (seen.jsonl, log/*.jsonl) or file-per-message keyed by message id (inbox/, outbox/) —
 // concurrent writers converge instead of clobbering a shared JSON blob.
 //
-// Scoping: with no explicit dir and no CLAUDE_TOGETHER_DIR, the store lives in a
-// per-project directory (~/.claude-together/projects/<key>) — room membership,
+// Scoping: with no explicit dir and no override env var, the store lives in a
+// per-project directory (~/.session-multiplayer/projects/<key>) — room membership,
 // inbox, and queues belong to the project a session runs in, never to the whole
 // machine. Only the display name is machine-global (identity file at the root).
-// An explicit dir (tests) or CLAUDE_TOGETHER_DIR keeps everything, name included,
-// in that one directory.
+// An explicit dir (tests) or SESSION_MULTIPLAYER_DIR / CLAUDE_TOGETHER_DIR keeps
+// everything, name included, in that one directory.
 //
 // Layout:
 //   config.json   — display name + room keys (small, rarely written, reloaded on read)
@@ -33,7 +33,7 @@ const SEEN_COMPACT_AT = 60_000
 //   log/<roomId>.jsonl — recent room history, replayed to peers when they reconnect
 export class Store {
   constructor (dir) {
-    const explicit = dir || process.env.CLAUDE_TOGETHER_DIR
+    const explicit = dir || overrideDir()
     this.dir = explicit || scopedDir()
     this.identityFile = explicit ? null : identityFile()
     for (const d of ['', 'outbox', 'inbox', 'log', 'members']) {
@@ -256,11 +256,12 @@ export class Store {
     const members = this.membersFor(roomId)
     const prev = members[name]
     const pinsKey = info?.pk && !prev?.pk && /^[0-9a-f]{64}$/.test(info.pk)
-    const hasNewInfo = (info && (info.host || info.label)) || pinsKey
+    const hasNewInfo = (info && (info.host || info.label || info.harness)) || pinsKey
     if (prev && prev.lastSeen >= ts && !hasNewInfo) return
     const next = { ...(prev || {}), lastSeen: Math.max(ts, prev?.lastSeen || 0) }
     if (info?.host) next.host = String(info.host).slice(0, 64)
     if (info?.label) next.label = String(info.label).slice(0, 64)
+    if (info?.harness) next.harness = String(info.harness).slice(0, 32)
     // TOFU pin: a member's first verified public key sticks; it is never
     // overwritten here — a different key later is flagged upstream, not adopted.
     if (pinsKey) next.pk = info.pk

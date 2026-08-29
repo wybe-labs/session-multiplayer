@@ -31,6 +31,10 @@ const INVITE_TTL_MS = 5 * 60_000
 // generous headroom while still bounding a flood.
 const MAX_LINE_BYTES = 256 * 1024
 
+// The "claude-together" domain strings below are FROZEN protocol constants:
+// session-multiplayer speaks the same wire protocol as claude-together v0.3
+// (this project's ancestor), so rooms can mix both implementations and any
+// harness. Renaming them would silently split the network. See PROTOCOL.md.
 function roomIdFor (roomKey) {
   return b4a.toString(derive(roomKey, 'claude-together-roomid').subarray(0, 8), 'hex')
 }
@@ -54,18 +58,34 @@ function sanitizeTo (to) {
 }
 
 // A human-readable tag for THIS session, sent with the hello handshake and on
-// every message so peers can tell your sessions apart. Claude Code launches MCP
+// every message so peers can tell your sessions apart. MCP harnesses launch
 // servers in the project directory, so the folder name is a good default;
-// override with CLAUDE_TOGETHER_LABEL.
+// override with SESSION_MULTIPLAYER_LABEL (or the legacy CLAUDE_TOGETHER_LABEL).
 function sessionLabel () {
-  if (process.env.CLAUDE_TOGETHER_LABEL) return process.env.CLAUDE_TOGETHER_LABEL.slice(0, 64)
+  const env = process.env.SESSION_MULTIPLAYER_LABEL || process.env.CLAUDE_TOGETHER_LABEL
+  if (env) return env.slice(0, 64)
   const dir = process.env.CLAUDE_PROJECT_DIR || process.cwd()
   return path.basename(dir).slice(0, 64)
+}
+
+// Which agent harness this server is running under. Adapters set the env var
+// explicitly at registration (the reliable path — Codex documents no marker env
+// of its own); CLAUDECODE=1 is set by Claude Code and serves as a fallback.
+// NOTE: harness is deliberately NOT covered by the message signature — the
+// 0.3.0 canonical signing form is frozen for compatibility with claude-together
+// peers, so this field is advisory decoration like the version string.
+function harnessName () {
+  const env = process.env.SESSION_MULTIPLAYER_HARNESS
+  if (env) return env.slice(0, 32).replace(/[^A-Za-z0-9._ -]/g, '')
+  if (process.env.CLAUDECODE) return 'claude-code'
+  if (process.env.CODEX_HOME || process.env.CODEX_API_KEY) return 'codex'
+  return 'mcp'
 }
 
 const SID_RE = /^[0-9a-f]{1,16}$/
 const PK_RE = /^[0-9a-f]{64}$/
 const SIG_RE = /^[0-9a-f]{128}$/
+const HARNESS_RE = /^[A-Za-z0-9._ -]{1,32}$/
 
 // Canonical byte string a message signature covers: every field a receiver acts
 // on, in fixed order, excluding pk/sig themselves. Sender signs the final message
@@ -377,6 +397,7 @@ export class Together extends EventEmitter {
               host: os.hostname().slice(0, 64),
               label: sessionLabel(),
               sid: this.sid,
+              harness: harnessName(),
               v: VERSION
             })
             // At-least-once delivery: replay everything not yet acked for this room,
@@ -429,9 +450,10 @@ export class Together extends EventEmitter {
         state.peerHost = msg.host ? String(msg.host).slice(0, 64) : null
         state.peerLabel = msg.label ? String(msg.label).slice(0, 64) : null
         state.peerSid = typeof msg.sid === 'string' && SID_RE.test(msg.sid) ? msg.sid : null
+        state.peerHarness = typeof msg.harness === 'string' && HARNESS_RE.test(msg.harness) ? msg.harness : null
         state.peerVersion = typeof msg.v === 'string' && /^\d+\.\d+\.\d+$/.test(msg.v) ? msg.v : null
         this.store.touchMember(roomId, state.peerName, Date.now(), {
-          host: state.peerHost, label: state.peerLabel
+          host: state.peerHost, label: state.peerLabel, harness: state.peerHarness
         })
         this._versionCheck(state, roomId)
         this.emit('peer-joined', { roomId, name: state.peerName })
@@ -533,6 +555,7 @@ export class Together extends EventEmitter {
           ...(msg.host ? { host: String(msg.host).slice(0, 64) } : {}),
           ...(msg.label ? { label: String(msg.label).slice(0, 64) } : {}),
           ...(typeof msg.sid === 'string' && SID_RE.test(msg.sid) ? { sid: msg.sid } : {}),
+          ...(typeof msg.harness === 'string' && HARNESS_RE.test(msg.harness) ? { harness: msg.harness } : {}),
           // The signature travels with the message so members catching up later
           // through a friend's log can verify the original sender themselves.
           ...(auth === 'verified' || auth === 'key-changed' ? { pk: pkHex, sig: sigHex } : {})
@@ -550,6 +573,7 @@ export class Together extends EventEmitter {
         this.store.touchMember(roomId, inbound.from, ts, {
           host: relay.host,
           label: relay.label,
+          harness: relay.harness,
           ...(auth === 'verified' && !pinned ? { pk: pkHex } : {})
         })
         this.store.pushInbound(inbound)
@@ -578,19 +602,20 @@ export class Together extends EventEmitter {
     const peerV = state.peerVersion || '0.2.0' // peers predating the version field
     const c = cmpVersion(peerV, VERSION)
     if (c === 0) return
-    const who = [state.peerName, state.peerHost, state.peerLabel, state.peerSid].filter(Boolean).join(' · ')
+    const who = [state.peerName, state.peerHost, state.peerLabel, state.peerSid,
+      state.peerHarness ? `harness: ${state.peerHarness}` : null].filter(Boolean).join(' · ')
     const key = `${who}|${peerV}`
     if (this._versionNotified.has(key)) return
     this._versionNotified.add(key)
     const room = this.store.rooms().find(r => r.id === roomId)
     const text = c < 0
-      ? `runs claude-together v${peerV}, older than this session's v${VERSION}. Tell your user, and suggest ` +
-        'they ask that peer (over the room, or any channel) to update: git pull in their claude-together ' +
-        'folder, then restart their Claude Code session.'
-      : `runs claude-together v${peerV} — NEWER than this session's v${VERSION}. Offer your user to update it ` +
+      ? `runs session-multiplayer v${peerV}, older than this session's v${VERSION}. Tell your user, and suggest ` +
+        'they ask that peer (over the room, or any channel) to update: git pull in their session-multiplayer ' +
+        'folder, then restart their agent session.'
+      : `runs session-multiplayer v${peerV} — NEWER than this session's v${VERSION}. Offer your user to update it ` +
         `for them right now (run "git pull" then "npm install" in ${PKG_ROOT}), and explain that after ` +
-        'updating they should restart Claude Code and resume this conversation with "claude --continue" ' +
-        '(or the resume picker) — restarting does not lose the session.'
+        'updating they should restart their agent and resume this conversation (on Claude Code, ' +
+        '"claude --continue" or the resume picker; on Codex, "codex resume") — restarting does not lose the session.'
     this.store.pushInbound({
       id: b4a.toString(hash(randomBytes(16)).subarray(0, 12), 'hex'),
       roomId,
@@ -638,6 +663,9 @@ export class Together extends EventEmitter {
       msg.pk = b4a.toString(this.keys.publicKey, 'hex')
       msg.sig = b4a.toString(sign(signable(msg), this.keys.secretKey), 'hex')
     }
+    // After signing: harness is advisory and excluded from the frozen 0.3.0
+    // canonical form, so claude-together peers still verify our signatures.
+    msg.harness = harnessName()
     this.store.markSeen(msgId) // never re-ingest our own message if echoed
     this.store.enqueueOutbound(msg)
     this.store.appendLog(msg)
@@ -665,7 +693,8 @@ export class Together extends EventEmitter {
           name: s.peerName,
           ...(s.peerHost ? { host: s.peerHost } : {}),
           ...(s.peerLabel ? { label: s.peerLabel } : {}),
-          ...(s.peerSid ? { sid: s.peerSid } : {})
+          ...(s.peerSid ? { sid: s.peerSid } : {}),
+          ...(s.peerHarness ? { harness: s.peerHarness } : {})
         }
       })
       const onlineNames = new Set(connectedPeers.map(p => p.name))
@@ -676,6 +705,7 @@ export class Together extends EventEmitter {
           lastSeen: new Date(m.lastSeen).toISOString(),
           ...(m.host ? { host: m.host } : {}),
           ...(m.label ? { label: m.label } : {}),
+          ...(m.harness ? { harness: m.harness } : {}),
           ...(m.pk ? { keyFingerprint: m.pk.slice(0, 12) } : {})
         }))
         .sort((a, b) => (b.online - a.online) || (b.lastSeen < a.lastSeen ? -1 : 1))
@@ -689,7 +719,7 @@ export class Together extends EventEmitter {
     })
     return {
       displayName: this.store.getName(),
-      session: { host: os.hostname().slice(0, 64), label: sessionLabel(), sid: this.sid },
+      session: { host: os.hostname().slice(0, 64), label: sessionLabel(), sid: this.sid, harness: harnessName() },
       rooms,
       pendingInvites: this.pendingInvites.size,
       unreadMessages: this.store.unreadCount()

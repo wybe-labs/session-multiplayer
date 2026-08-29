@@ -4,17 +4,20 @@ import crypto from 'node:crypto'
 
 // Per-project scoping. Room membership is a property of the project directory a
 // session runs in, not of the machine: each project gets its own store under
-// ~/.claude-together/projects/<key>, so joining a room in one project never makes
-// sessions in other projects members. The MCP server and the delivery hooks are
-// both launched in the project directory (hooks additionally get
-// CLAUDE_PROJECT_DIR), so both sides derive the same key with no coordination.
+// ~/.session-multiplayer/projects/<key>, so joining a room in one project never
+// makes sessions in other projects members. The MCP server and any delivery
+// hooks are launched in the project directory (Claude Code hooks additionally
+// get CLAUDE_PROJECT_DIR), so both sides derive the same key with no
+// coordination.
 //
-// CLAUDE_TOGETHER_DIR overrides scoping entirely: it names one exact store
-// directory (the pre-0.3 machine-global behavior, and the escape hatch for tests
-// or deliberately shared state).
+// SESSION_MULTIPLAYER_DIR overrides scoping entirely: it names one exact store
+// directory (the escape hatch for tests or deliberately shared state).
+// CLAUDE_TOGETHER_DIR is honored as a legacy alias so a store created by
+// claude-together — which speaks the same protocol and store format — can be
+// reused as-is.
 
 export function root () {
-  return path.join(os.homedir(), '.claude-together')
+  return path.join(os.homedir(), '.session-multiplayer')
 }
 
 export function projectDir () {
@@ -32,8 +35,12 @@ export function projectKey (dir = projectDir()) {
   return `${base}-${digest}`
 }
 
+export function overrideDir () {
+  return process.env.SESSION_MULTIPLAYER_DIR || process.env.CLAUDE_TOGETHER_DIR || null
+}
+
 export function scopedDir () {
-  return process.env.CLAUDE_TOGETHER_DIR || path.join(root(), 'projects', projectKey())
+  return overrideDir() || path.join(root(), 'projects', projectKey())
 }
 
 // Display name stays machine-global — you are the same person in every project.

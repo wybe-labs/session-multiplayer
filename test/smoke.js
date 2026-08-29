@@ -27,7 +27,8 @@ function waitFor (emitter, event, pred = () => true, timeoutMs = 45_000) {
   })
 }
 
-process.env.CLAUDE_TOGETHER_LABEL = 'smoke-session'
+process.env.SESSION_MULTIPLAYER_LABEL = 'smoke-session'
+process.env.SESSION_MULTIPLAYER_HARNESS = 'smoke-harness'
 
 const testnet = await createTestnet(3)
 const bootstrap = testnet.bootstrap
@@ -74,7 +75,8 @@ console.log('   chat messages carry session identifiers and verify (TOFU)…')
 assert.equal(bobMsg.host, os.hostname().slice(0, 64))
 assert.equal(bobMsg.label, 'smoke-session')
 assert.equal(bobMsg.sid, bob.sid, 'chat carries the sender session id')
-assert.equal(bobMsg.auth, 'verified', 'signature verifies and pins on first contact')
+assert.equal(bobMsg.harness, 'smoke-harness', 'chat carries the sender harness')
+assert.equal(bobMsg.auth, 'verified', 'signature verifies and pins on first contact — harness is outside the signed form')
 
 const gotByBob = waitFor(bob, 'message', m => m.kind === 'chat')
 alice.sendMessage('test-room', 'hey bob, ship it')
@@ -97,6 +99,7 @@ console.log('   carol is in, connected to the mesh; bob got her join announcemen
 console.log('   status shows membership with last-seen…')
 const bobStatus = bob.status()
 assert.match(bobStatus.session.sid, /^[0-9a-f]{6}$/, 'status reports own session id')
+assert.equal(bobStatus.session.harness, 'smoke-harness', 'status reports own harness')
 const bobRoom = bobStatus.rooms.find(r => r.name === 'test-room')
 assert.ok(bobRoom.members.some(m => m.name === 'alice'))
 assert.ok(bobRoom.members.some(m => m.name === 'carol'))

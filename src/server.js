@@ -12,7 +12,7 @@ const store = new Store()
 const together = new Together({ store })
 
 const server = new McpServer({
-  name: 'claude-together',
+  name: 'session-multiplayer',
   version: VERSION
 })
 
@@ -27,7 +27,8 @@ const AUTH_WARNINGS = {
 
 function renderLine (m, withTimestamp) {
   const stamp = withTimestamp ? `[${new Date(m.ts).toISOString()}] ` : ''
-  const where = [m.host, m.label, m.sid].filter(Boolean).join(' · ')
+  const where = [m.host, m.label, m.sid, m.harness ? `harness: ${m.harness}` : null]
+    .filter(Boolean).join(' · ')
   const warn = AUTH_WARNINGS[m.auth] || ''
   if (m.kind !== 'presence') {
     const addr = Array.isArray(m.to) && m.to.length ? ` (to: ${m.to.join(', ')})` : ''
@@ -56,7 +57,7 @@ server.registerTool('create_invite', {
 
 server.registerTool('join_room', {
   title: 'Join a room with an invite code',
-  description: 'Redeem an invite code from a friend to join their room. Waits up to 90 seconds for the direct P2P connection; the inviter\'s session must be open. Membership is scoped to this project directory — sessions in other projects on this machine are unaffected and must join explicitly. Joining announces you to the room: your display name, machine hostname, and session label (the project folder name, or CLAUDE_TOGETHER_LABEL if set) are sent to all members.',
+  description: 'Redeem an invite code from a friend to join their room. Works across harnesses: the inviter can be on Claude Code, Codex, or any MCP agent. Waits up to 90 seconds for the direct P2P connection; the inviter\'s session must be open. Membership is scoped to this project directory — sessions in other projects on this machine are unaffected and must join explicitly. Joining announces you to the room: your display name, machine hostname, session label (the project folder name, or SESSION_MULTIPLAYER_LABEL if set), and harness are sent to all members.',
   inputSchema: { code: z.string().describe('The invite code, e.g. X7KQ-2MPF-3HV9 (dashes/case optional)') }
 }, async ({ code }) => {
   const res = await together.joinWithCode(code)
@@ -65,7 +66,7 @@ server.registerTool('join_room', {
 
 server.registerTool('send_message', {
   title: 'Send a message to a room',
-  description: 'Send a plain-text message to a room. Every message goes into the shared room chat log for all members; priority controls how it lands in their Claude sessions: "interrupt" is injected mid-turn at their next tool boundary (use sparingly — it barges in), "normal" (default) is delivered when their Claude finishes its current turn or they next prompt, "passive" just sits in their inbox until they check it. To address specific people, pass their display names in "to": only the named recipients get the active priority; everyone else in the room receives the message passively (inbox/chat log only, no interruption). Omit "to" to deliver at the given priority to the whole room. If no peer is online, the message queues locally and delivers on reconnect.',
+  description: 'Send a plain-text message to a room. Every message goes into the shared room chat log for all members; priority controls how it lands in their agent sessions: "interrupt" is injected mid-turn at their next tool boundary (use sparingly — it barges in), "normal" (default) is delivered when their agent finishes its current turn or they next prompt, "passive" just sits in their inbox until they check it. Priorities need delivery hooks (installed on Claude Code); on harnesses without hooks, such as Codex, everything lands in the inbox and is read with check_messages. To address specific people, pass their display names in "to": only the named recipients get the active priority; everyone else in the room receives the message passively (inbox/chat log only, no interruption). Omit "to" to deliver at the given priority to the whole room. If no peer is online, the message queues locally and delivers on reconnect.',
   inputSchema: {
     room_name: z.string().describe('Room to send to'),
     message: z.string().describe('Plain text message (no files or commands)'),
@@ -90,7 +91,7 @@ server.registerTool('send_message', {
 
 server.registerTool('check_messages', {
   title: 'Check for new messages',
-  description: 'Fetch and clear all unread messages from all rooms — including passive ones that are never auto-delivered. Interrupt/normal messages usually reach sessions automatically via the delivery hooks; use this when the user asks what their friends said, or to read passive mail.',
+  description: 'Fetch and clear all unread messages from all rooms — including passive ones that are never auto-delivered. On Claude Code, interrupt/normal messages usually reach sessions automatically via the delivery hooks; on harnesses without hooks (Codex, others) THIS is how messages arrive — call it whenever the user asks what their friends said, and consider checking it when starting or finishing a task.',
   inputSchema: {}
 }, async () => {
   const msgs = store.drainInbound()
@@ -118,9 +119,8 @@ server.registerTool('status', {
   description: 'Show your display name, rooms joined by this project, currently connected peers, known room members with last-seen times, queued undelivered messages, and unread count.',
   inputSchema: {}
 }, async () => {
-  const scope = process.env.CLAUDE_TOGETHER_DIR
-    ? `custom store (CLAUDE_TOGETHER_DIR=${process.env.CLAUDE_TOGETHER_DIR})`
-    : projectDir()
+  const override = process.env.SESSION_MULTIPLAYER_DIR || process.env.CLAUDE_TOGETHER_DIR
+  const scope = override ? `custom store (${override})` : projectDir()
   return text(JSON.stringify({ scope, ...together.status() }, null, 2))
 })
 
@@ -145,19 +145,20 @@ server.registerTool('leave_room', {
 
 await together.start()
 
-// One-time per project: pre-0.3 versions kept a machine-global room list that 0.3's
-// per-project scoping no longer joins. Explain that in-session instead of letting
-// rooms silently vanish. Local notice only — nothing is sent to peers.
+// One-time per project: a machine-global room list (from pre-0.3 claude-together,
+// this project's ancestor) is no longer joined under per-project scoping. Explain
+// that in-session instead of letting rooms silently vanish. Local notice only —
+// nothing is sent to peers.
 const legacyRooms = store.takeLegacyRoomsNotice()
 if (legacyRooms) {
   store.pushInbound({
     id: b4a.toString(hash(randomBytes(16)).subarray(0, 12), 'hex'),
-    roomName: 'claude-together',
-    from: `claude-together v${VERSION}`,
-    text: 'update note: since v0.3, room membership is per project directory. The machine-wide ' +
-      `room(s) from v0.2 (${legacyRooms.join(', ')}) are no longer joined by any session — ` +
+    roomName: 'session-multiplayer',
+    from: `session-multiplayer v${VERSION}`,
+    text: 'update note: room membership is per project directory. The machine-wide ' +
+      `room(s) found in the old store (${legacyRooms.join(', ')}) are no longer joined by any session — ` +
       'create fresh invites in the projects that need them, or set ' +
-      'CLAUDE_TOGETHER_DIR=~/.claude-together to keep the old shared store. ' +
+      'SESSION_MULTIPLAYER_DIR to the old store directory to keep using it as one shared store. ' +
       'Explain this change to your user.',
     ts: Date.now(),
     priority: 'normal',
