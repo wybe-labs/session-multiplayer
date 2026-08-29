@@ -1,16 +1,15 @@
-// Merges the Claude Together delivery hooks into ~/.claude/settings.json.
-// Idempotent: existing claude-together hook entries are replaced, everything else
-// in the file is left untouched. Run directly or via `npm run register`.
+// Merges the Session Multiplayer delivery hooks into ~/.claude/settings.json.
+// Idempotent: existing session-multiplayer hook entries are replaced, everything
+// else in the file is left untouched. Run directly or via `npm run register:claude`.
 import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
 import { fileURLToPath } from 'node:url'
 
-const MARK = 'claude-together'
+const MARK = 'session-multiplayer'
 
 export function installHooks () {
-  const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-  const hookScript = path.join(root, 'scripts', 'hook.js')
+  const hookScript = path.join(path.dirname(fileURLToPath(import.meta.url)), 'hook.js')
   const settingsPath = path.join(os.homedir(), '.claude', 'settings.json')
 
   fs.mkdirSync(path.dirname(settingsPath), { recursive: true })
