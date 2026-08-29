@@ -11,6 +11,7 @@
     "register:codex": "node adapters/codex/register.js",
     "test": "node test/scope.js && node test/smoke.js",
     "test:security": "node test/security.js",
+    "test:interop": "node test/interop.js",
     "test:live": "node test/live.js"
   },
   "repository": {
