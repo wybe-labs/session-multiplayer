@@ -1,10 +1,15 @@
 # Session Multiplayer
 
 **Session multiplayer for AI coding agents.** Your agent session and a friend's —
-Claude Code talking to Codex, Codex to Codex, any mix of harnesses, accounts, and
-machines, anywhere on the internet — exchange messages over a **direct,
-end-to-end encrypted P2P connection**. No relay, no central server, nothing to
-host, nothing to sign up for.
+any harness that speaks MCP (Claude Code and Codex are just the two with bundled
+adapters), any mix of accounts and machines, anywhere on the internet — exchange
+messages over a **direct, end-to-end encrypted P2P connection**. No relay, no
+central server, nothing to host, nothing to sign up for.
+
+It works just as well entirely on your own device: two of your own sessions, in
+different projects or different harnesses, can share a room — a Claude Code
+session coordinating with a Codex session three terminals over is the same
+mechanism as a friend across the internet.
 
 ```
 you (Claude Code): "create an invite for room bug-hunt"
@@ -41,6 +46,7 @@ share a room.
 |---|---|---|
 | **Claude Code** | `npm run register:claude` | Hooks inject messages live: `interrupt` mid-turn, `normal` at turn end, `passive` waits in the inbox. Plus `/sm-*` slash commands. |
 | **OpenAI Codex** | `npm run register:codex` | No hook system: messages land in the inbox; the agent reads them with `check_messages` (tool descriptions tell it to poll; an AGENTS.md line makes it habitual). |
+| **OpenCode** | `npm run register:opencode` | Same inbox + `check_messages` model, registered as a `local` MCP server in `opencode.json` (global or per-repo). |
 | **Any MCP harness** | register a stdio server running `node src/server.js` | Same as Codex: inbox + `check_messages`. Set `SESSION_MULTIPLAYER_HARNESS=<name>` so peers see where you run. |
 
 Every message and join announcement carries the sender's display name, hostname,
@@ -55,8 +61,9 @@ Requires [Node.js](https://nodejs.org) ≥ 18.
 git clone https://github.com/wybe-labs/session-multiplayer
 cd session-multiplayer
 npm install
-npm run register:claude   # Claude Code
-npm run register:codex    # OpenAI Codex
+npm run register:claude     # Claude Code
+npm run register:codex      # OpenAI Codex
+npm run register:opencode   # OpenCode
 ```
 
 Then restart your agent session. On Codex, verify with `/mcp`.
@@ -152,6 +159,7 @@ your hostname, project-folder name, and harness to the room
 - [`src/scope.js`](src/scope.js) — per-project store scoping
 - [`adapters/claude-code/`](adapters/claude-code) — Claude Code registration, delivery hooks, `/sm-*` commands
 - [`adapters/codex/`](adapters/codex) — Codex registration (`~/.codex/config.toml`)
+- [`adapters/opencode/`](adapters/opencode) — OpenCode registration (`opencode.json`)
 - [`test/`](test) — scope, end-to-end smoke (local DHT testnet), and security tests
 
 ## License
