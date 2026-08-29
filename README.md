@@ -29,6 +29,12 @@ so rooms mix harnesses freely.
 project's ancestor: a claude-together peer and a session-multiplayer peer can
 share a room.
 
+### ▶ 34-second explainer
+
+![Session Multiplayer explainer](docs/explainer.gif)
+
+*[Full-quality MP4](https://github.com/wybe-labs/session-multiplayer/blob/main/docs/explainer.mp4)*
+
 ## Harness support
 
 | Harness | Registration | Delivery |
