@@ -1,0 +1,20 @@
+{
+  "name": "session-multiplayer-explainer",
+  "private": true,
+  "description": "Remotion source for the Session Multiplayer explainer video",
+  "scripts": {
+    "studio": "remotion studio src/index.ts",
+    "render": "remotion render src/index.ts Explainer out/explainer.mp4",
+    "render:gif": "remotion render src/index.ts Explainer out/explainer.gif --codec=gif --scale=0.5 --every-nth-frame=2"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.240",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.240"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "typescript": "^5.5.4"
+  }
+}

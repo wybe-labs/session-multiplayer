@@ -3,4 +3,4 @@ node_modules/
 .mcp.json
 *.tmp
 video/out/
-video/
+video/node_modules/
