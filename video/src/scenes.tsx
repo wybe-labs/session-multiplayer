@@ -2,7 +2,7 @@ import React from 'react'
 import { AbsoluteFill, interpolate, useCurrentFrame } from 'remotion'
 import { T } from './theme'
 import {
-  DrawnLine, FadeUp, PageBg, Packet, SceneTitle, Terminal, Typewriter, useSpringIn
+  DrawnLine, FadeUp, Grad, PageBg, Packet, SceneTitle, Terminal, Typewriter, useSpringIn
 } from './components'
 
 const SceneFade: React.FC<{ duration: number; children: React.ReactNode }> = ({ duration, children }) => {
@@ -19,21 +19,22 @@ const SceneFade: React.FC<{ duration: number; children: React.ReactNode }> = ({ 
   )
 }
 
+// Accent color that stays readable on the dark code windows.
+const ACC_ON_DARK = '#2aa08c'
+
 const HarnessChip: React.FC<{ name: string; color?: string; style?: React.CSSProperties }> = ({
   name,
-  color = T.blue,
+  color = T.dim,
   style
 }) => (
   <span
     style={{
       fontFamily: T.mono,
       fontSize: 20,
-      fontWeight: 700,
       color,
-      background: `${color}22`,
-      border: `2px solid ${color}`,
-      borderRadius: 8,
-      padding: '2px 10px',
+      border: `1.5px solid ${color}`,
+      borderRadius: 6,
+      padding: '3px 12px',
       ...style
     }}
   >
@@ -57,7 +58,7 @@ export const Hook: React.FC = () => {
             transform: `scale(${0.92 + title * 0.08})`
           }}
         >
-          Session <span style={{ color: T.accentDeep }}>Multiplayer</span>
+          Session <Grad>Multiplayer</Grad>
         </div>
         <FadeUp delay={22}>
           <div style={{ fontFamily: T.sans, fontSize: 46, color: T.dim }}>
@@ -65,12 +66,14 @@ export const Hook: React.FC = () => {
           </div>
         </FadeUp>
         <FadeUp delay={38}>
-          <div style={{ display: 'flex', gap: 18, alignItems: 'center' }}>
-            <HarnessChip name="claude code" color={T.accentDeep} />
-            <span style={{ fontFamily: T.sans, fontSize: 30, color: T.dim }}>+</span>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+            <HarnessChip name="claude code" />
+            <span style={{ fontFamily: T.sans, fontSize: 28, color: T.dim }}>·</span>
             <HarnessChip name="codex" />
-            <span style={{ fontFamily: T.sans, fontSize: 30, color: T.dim }}>+</span>
-            <HarnessChip name="any MCP harness" color={T.green} />
+            <span style={{ fontFamily: T.sans, fontSize: 28, color: T.dim }}>·</span>
+            <HarnessChip name="opencode" />
+            <span style={{ fontFamily: T.sans, fontSize: 28, color: T.dim }}>·</span>
+            <HarnessChip name="any MCP harness" />
           </div>
         </FadeUp>
       </AbsoluteFill>
@@ -89,13 +92,13 @@ export const Problem: React.FC = () => {
           <FadeUp delay={8} dist={40}>
             <Terminal title="you · claude code" width={480}>
               <div style={{ color: T.termDim }}>account: <span style={{ color: T.termText }}>you@gmail.com</span></div>
-              <div style={{ marginTop: 10, color: '#e58c74' }}>friend unreachable</div>
+              <div style={{ marginTop: 10, color: '#e57373' }}>friend unreachable</div>
             </Terminal>
           </FadeUp>
           <FadeUp delay={16} dist={40}>
             <Terminal title="your friend · codex" width={480}>
               <div style={{ color: T.termDim }}>account: <span style={{ color: T.termText }}>friend@gmail.com</span></div>
-              <div style={{ marginTop: 10, color: '#e58c74' }}>you unreachable</div>
+              <div style={{ marginTop: 10, color: '#e57373' }}>you unreachable</div>
             </Terminal>
           </FadeUp>
         </div>
@@ -123,9 +126,9 @@ const CodeChip: React.FC<{ style?: React.CSSProperties }> = ({ style }) => (
       fontFamily: T.mono,
       fontSize: 32,
       fontWeight: 700,
-      color: T.accentDeep,
-      background: `${T.accent}1f`,
-      border: `2px solid ${T.accentDeep}`,
+      color: ACC_ON_DARK,
+      background: '#2aa08c1a',
+      border: '2px solid #2aa08c',
       borderRadius: 10,
       padding: '5px 16px',
       ...style
@@ -150,7 +153,7 @@ export const Invite: React.FC = () => {
           <FadeUp delay={6} dist={40}>
             <Terminal title="you · claude code" width={660}>
               <div>
-                <span style={{ color: T.accent }}>&gt; </span>
+                <span style={{ color: ACC_ON_DARK }}>&gt; </span>
                 <Typewriter text="/sm-invite bug-hunt" delay={10} cps={3.2} />
               </div>
               {frame > 42 && (
@@ -168,12 +171,12 @@ export const Invite: React.FC = () => {
           <FadeUp delay={55} dist={40}>
             <Terminal title="your friend · codex" width={660}>
               <div>
-                <span style={{ color: T.accent }}>&gt; </span>
+                <span style={{ color: ACC_ON_DARK }}>&gt; </span>
                 <Typewriter text="join room X7KQ-2MPF-3HV9" delay={92} cps={3.2} />
               </div>
               {frame > 132 && (
                 <FadeUp delay={132} dist={12}>
-                  <div style={{ marginTop: 12, color: '#9fb383', fontWeight: 700 }}>
+                  <div style={{ marginTop: 12, color: '#5fbf87', fontWeight: 700 }}>
                     ✓ joined "bug-hunt", end-to-end encrypted
                   </div>
                 </FadeUp>
@@ -217,21 +220,20 @@ const Node: React.FC<{
         width: 160,
         height: 160,
         borderRadius: 80,
-        background: T.termBg,
-        border: `4px solid ${dimmed ? T.border : T.accent}`,
+        background: T.bgPanel,
+        border: `3px solid ${dimmed ? T.border : T.ink}`,
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
-        gap: 3,
-        opacity: s * (dimmed ? 0.4 : 1),
+        gap: 5,
+        opacity: s * (dimmed ? 0.45 : 1),
         transform: `scale(${s})`,
-        boxShadow: dimmed ? 'none' : `0 10px 30px ${T.accent}44`
+        boxShadow: dimmed ? 'none' : '0 10px 26px rgba(22,24,29,0.12)'
       }}
     >
-      <div style={{ fontSize: 40 }}>💻</div>
-      <div style={{ fontFamily: T.sans, fontSize: 24, fontWeight: 600, color: T.termText }}>{label}</div>
-      {sub && <div style={{ fontFamily: T.mono, fontSize: 17, color: T.termDim }}>{sub}</div>}
+      <div style={{ fontFamily: T.sans, fontSize: 26, fontWeight: 600, color: T.ink }}>{label}</div>
+      {sub && <div style={{ fontFamily: T.mono, fontSize: 18, color: T.dim }}>{sub}</div>}
     </div>
   )
 }
@@ -313,32 +315,34 @@ export const HowItWorks: React.FC = () => {
 
       <Node x={YOU.x} y={YOU.y} label="you" sub="claude code" delay={8} />
       <Node x={FRIEND.x} y={FRIEND.y} label="friend" sub="codex" delay={14} />
-      {frame >= 120 && <Node x={THIRD.x} y={THIRD.y} label="friend 2" sub="codex" delay={122} dimmed={thirdOffline} />}
+      {frame >= 120 && <Node x={THIRD.x} y={THIRD.y} label="friend 2" sub="opencode" delay={122} dimmed={thirdOffline} />}
       {thirdOffline && (
-        <div style={{ position: 'absolute', left: THIRD.x - 55, top: THIRD.y + 88, fontFamily: T.sans, fontSize: 24, color: T.dim }}>
-          offline 💤
+        <div style={{ position: 'absolute', left: THIRD.x - 42, top: THIRD.y + 88, fontFamily: T.mono, fontSize: 22, color: T.dim }}>
+          (offline)
         </div>
       )}
 
       <div
         style={{
           position: 'absolute',
-          left: 960 - 36,
-          top: 580 - 36,
-          width: 72,
-          height: 72,
-          borderRadius: 36,
-          background: T.bg,
-          border: `3px solid ${T.green}`,
+          left: 960 - 86,
+          top: 580 - 26,
+          width: 172,
+          height: 52,
+          borderRadius: 26,
+          background: T.bgPanel,
+          border: `2px solid ${T.green}`,
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          fontSize: 34,
+          fontFamily: T.mono,
+          fontSize: 22,
+          color: T.green,
           opacity: lock,
           transform: `scale(${lock})`
         }}
       >
-        🔒
+        encrypted
       </div>
 
       <Caption from={24} to={62}>
@@ -370,7 +374,7 @@ export const Identity: React.FC = () => {
               <span style={{ color: T.termDim }}>[room: bug-hunt] </span>
               <span style={{ color: T.termText, fontWeight: 700 }}>oscar </span>
               <span style={{ color: T.termDim }}>(mac-studio · api-server · 3f9c2a · </span>
-              <HarnessChip name="harness: codex" style={{ fontSize: 19 }} />
+              <HarnessChip name="harness: codex" color={ACC_ON_DARK} style={{ fontSize: 19 }} />
               <span style={{ color: T.termDim }}>)</span>
             </div>
             <div style={{ marginTop: 8, color: T.termText }}>
@@ -378,7 +382,7 @@ export const Identity: React.FC = () => {
             </div>
             {frame > 48 && (
               <FadeUp delay={48} dist={10}>
-                <div style={{ marginTop: 12, color: '#9fb383', fontSize: 22 }}>
+                <div style={{ marginTop: 12, color: '#5fbf87', fontSize: 22 }}>
                   ✓ signature verified, key pinned on first use
                 </div>
               </FadeUp>
@@ -396,34 +400,33 @@ export const Identity: React.FC = () => {
 }
 
 // ---------- 6. Features (150 = 5s) ----------
-const FEATURES: Array<[string, string]> = [
-  ['🤝', 'Claude Code to Codex, any mix of harnesses'],
-  ['🔒', 'End-to-end encrypted, signed, serverless'],
-  ['📨', 'Interrupt mid-turn, deliver at turn end, or drop in the inbox'],
-  ['👥', 'Group rooms where every project is a peer']
+const FEATURES: string[] = [
+  'Any harness that speaks MCP, in any mix',
+  'End-to-end encrypted, signed, serverless',
+  'Interrupt mid-turn, deliver at turn end, or drop in the inbox',
+  'Bridge your own sessions on one device, or friends across the internet'
 ]
 
 export const Features: React.FC = () => (
   <SceneFade duration={150}>
     <SceneTitle text="What you get" delay={3} />
     <AbsoluteFill style={{ justifyContent: 'center', alignItems: 'center' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 26, marginTop: 50 }}>
-        {FEATURES.map(([icon, title], i) => (
-          <FadeUp key={title} delay={12 + i * 10} dist={36}>
+      <div style={{ width: 1180, marginTop: 46 }}>
+        {FEATURES.map((title, i) => (
+          <FadeUp key={title} delay={12 + i * 10} dist={22}>
             <div
               style={{
                 display: 'flex',
-                alignItems: 'center',
-                gap: 26,
-                width: 1240,
-                background: '#ffffff',
-                border: `2px solid ${T.border}`,
-                borderRadius: 16,
-                padding: '24px 34px',
-                boxShadow: '0 6px 18px rgba(20,20,19,0.06)'
+                alignItems: 'baseline',
+                gap: 38,
+                padding: '30px 8px',
+                borderTop: `1px solid ${T.border}`,
+                borderBottom: i === FEATURES.length - 1 ? `1px solid ${T.border}` : undefined
               }}
             >
-              <div style={{ fontSize: 46 }}>{icon}</div>
+              <div style={{ fontFamily: T.mono, fontSize: 26, color: T.accent, width: 54, flexShrink: 0 }}>
+                {String(i + 1).padStart(2, '0')}
+              </div>
               <div style={{ fontFamily: T.sans, fontSize: 36, fontWeight: 600, color: T.ink }}>{title}</div>
             </div>
           </FadeUp>
@@ -442,23 +445,23 @@ export const CTA: React.FC = () => {
         <FadeUp delay={4}>
           <Terminal title="get started" width={1150}>
             <div>
-              <span style={{ color: T.accent }}>$ </span>
+              <span style={{ color: ACC_ON_DARK }}>$ </span>
               <Typewriter text="git clone https://github.com/wybe-labs/session-multiplayer" delay={8} cps={3.4} />
             </div>
             <div style={{ marginTop: 8 }}>
-              <span style={{ color: T.accent }}>$ </span>
+              <span style={{ color: ACC_ON_DARK }}>$ </span>
               <Typewriter text="npm install && npm run register:claude" delay={46} cps={3.4} />
             </div>
             {frame > 78 && (
               <FadeUp delay={78} dist={10}>
                 <div style={{ color: T.termDim, fontSize: 22, marginTop: 4 }}>
-                  (or register:codex, same rooms either way)
+                  (or register:codex / register:opencode, same rooms)
                 </div>
               </FadeUp>
             )}
             {frame > 92 && (
               <FadeUp delay={92} dist={10}>
-                <div style={{ marginTop: 10, color: '#9fb383' }}>
+                <div style={{ marginTop: 10, color: '#5fbf87' }}>
                   ✓ ready, invite your first peer
                 </div>
               </FadeUp>
@@ -467,7 +470,7 @@ export const CTA: React.FC = () => {
         </FadeUp>
         <FadeUp delay={104}>
           <div style={{ fontFamily: T.serif, fontSize: 84, fontWeight: 700, color: T.ink }}>
-            Session <span style={{ color: T.accentDeep }}>Multiplayer</span>
+            Session <Grad>Multiplayer</Grad>
           </div>
         </FadeUp>
         <FadeUp delay={118}>

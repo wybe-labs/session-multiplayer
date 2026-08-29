@@ -1,19 +1,20 @@
-// Claude / Anthropic brand palette: ivory cream ground, slate ink, terracotta accent.
+// Restrained light palette: white ground, near-black ink, one muted teal-green
+// accent used sparingly. No gradients, no glows.
 export const T = {
-  bg: '#faf9f5',
-  bgPanel: '#f0eee6',
-  ink: '#141413',
-  dim: '#87867f',
-  border: '#dedcd1',
-  accent: '#d97757',
-  accentDeep: '#c96442',
-  blue: '#6a9bcc',
-  green: '#788c5d',
-  red: '#bf4d43',
-  termBg: '#141413',
-  termText: '#faf9f5',
-  termDim: '#a8a69d',
-  serif: "Georgia, 'Times New Roman', 'Anthropic Serif', serif",
-  sans: "'Segoe UI', system-ui, sans-serif",
+  bg: '#fcfcfb',
+  bgPanel: '#ffffff',
+  ink: '#16181d',
+  dim: '#6f7480',
+  border: '#e4e5e8',
+  accent: '#0e7566',
+  accentDeep: '#0a5c50',
+  blue: '#475569',
+  green: '#178a50',
+  red: '#c0392b',
+  termBg: '#16181d',
+  termText: '#f5f5f4',
+  termDim: '#8b8f98',
+  serif: "'Segoe UI', 'Inter', system-ui, sans-serif",
+  sans: "'Segoe UI', 'Inter', system-ui, sans-serif",
   mono: "Consolas, 'Cascadia Code', 'Courier New', monospace"
 }

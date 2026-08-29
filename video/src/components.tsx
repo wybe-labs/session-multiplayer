@@ -37,13 +37,13 @@ export const Typewriter: React.FC<{
     <span style={{ fontFamily: T.mono, color, whiteSpace: 'pre-wrap', ...style }}>
       {text.slice(0, chars)}
       {!done && frame >= delay && (
-        <span style={{ opacity: blink ? 1 : 0, color: T.accent }}>▋</span>
+        <span style={{ opacity: blink ? 1 : 0, color: '#2aa08c' }}>▋</span>
       )}
     </span>
   )
 }
 
-// Dark slate code window on the ivory page.
+// Code window card on the dark page.
 export const Terminal: React.FC<{
   title: string
   width: number
@@ -54,9 +54,9 @@ export const Terminal: React.FC<{
     style={{
       width,
       background: T.termBg,
-      borderRadius: 16,
+      borderRadius: 12,
       overflow: 'hidden',
-      boxShadow: '0 18px 50px rgba(20,20,19,0.18)',
+      boxShadow: '0 14px 40px rgba(22,24,29,0.16)',
       ...style
     }}
   >
@@ -66,8 +66,8 @@ export const Terminal: React.FC<{
         alignItems: 'center',
         gap: 8,
         padding: '11px 16px',
-        background: '#232320',
-        borderBottom: '1px solid #3a3934'
+        background: '#22252c',
+        borderBottom: '1px solid #33363e'
       }}
     >
       <Dot c="#ff5f57" />
@@ -151,13 +151,10 @@ export const SceneTitle: React.FC<{ text: React.ReactNode; delay?: number; top?:
 )
 
 export const PageBg: React.FC = () => (
-  <div
-    style={{
-      position: 'absolute',
-      inset: 0,
-      background: T.bg,
-      backgroundImage: `radial-gradient(${T.border} 1.2px, transparent 1.2px)`,
-      backgroundSize: '56px 56px'
-    }}
-  />
+  <div style={{ position: 'absolute', inset: 0, background: T.bg }} />
+)
+
+// Accent word in titles: solid color, nothing fancy.
+export const Grad: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <span style={{ color: T.accent }}>{children}</span>
 )
