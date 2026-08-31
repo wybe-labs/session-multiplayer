@@ -1,6 +1,6 @@
 {
   "name": "session-multiplayer",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Serverless P2P session multiplayer for AI coding agents — one MCP server, any harness: Claude Code, Codex, or anything that speaks MCP",
   "type": "module",
   "main": "src/server.js",

@@ -28,7 +28,7 @@ and talk over Noise-encrypted sockets. Exposed to agents as an
 [MCP](https://modelcontextprotocol.io) server — the same server on every harness,
 so rooms mix harnesses freely.
 
-**Current release: v0.3.0 (LTS)** — the wire protocol is specified in
+**Current release: v0.3.1 (LTS)** — the wire protocol is specified in
 [PROTOCOL.md](PROTOCOL.md) and frozen for 0.3.x. Fully interoperable with
 [claude-together](https://github.com/wybe-labs/claude-together) v0.3, this
 project's ancestor: a claude-together peer and a session-multiplayer peer can

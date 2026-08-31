@@ -79,7 +79,10 @@ alice.sendMessage('mixed-room', 'right back at you')
 const m2 = await gotByBob
 assert.equal(m2.from, 'alice-ct')
 assert.equal(m2.auth, 'verified')
-assert.equal(m2.harness, undefined, 'peers without the harness field are tolerated')
+// claude-together 0.3.1+ sends the harness field too (same env in this shared
+// process). The field stays optional on the wire, so pre-0.3.1 peers that omit
+// it are still accepted — that path is covered by the optional parsing itself.
+assert.equal(m2.harness, 'interop-test', 'harness field round-trips from a claude-together peer')
 
 await alice.stop()
 await bob.stop()
