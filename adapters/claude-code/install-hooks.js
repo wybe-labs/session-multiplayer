@@ -6,7 +6,13 @@ import path from 'node:path'
 import os from 'node:os'
 import { fileURLToPath } from 'node:url'
 
-const MARK = 'session-multiplayer'
+// Recognize our own hook entries regardless of how the repo folder is spelled
+// (session-multiplayer, SessionMultiplayer, …): normalize case and hyphens, and
+// require the hook script name so unrelated commands can't match.
+function isOurs (command) {
+  const c = String(command || '').toLowerCase().replace(/-/g, '')
+  return c.includes('sessionmultiplayer') && c.includes('hook.js')
+}
 
 export function installHooks () {
   const hookScript = path.join(path.dirname(fileURLToPath(import.meta.url)), 'hook.js')
@@ -33,7 +39,7 @@ export function installHooks () {
   for (const [event, entries] of Object.entries(wanted)) {
     const existing = settings.hooks[event] || []
     const others = existing.filter(e =>
-      !(e.hooks || []).some(h => (h.command || '').includes(MARK)))
+      !(e.hooks || []).some(h => isOurs(h.command)))
     settings.hooks[event] = [...others, ...entries]
   }
 
