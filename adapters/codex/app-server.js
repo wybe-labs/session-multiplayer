@@ -18,6 +18,9 @@ export async function withAppServer (fn, { bin = process.env.CODEX_BIN || 'codex
   let exited = null
   const failAll = err => { for (const { reject, timer } of pending.values()) { clearTimeout(timer); reject(err) } pending.clear() }
   child.on('error', err => { exited = err; failAll(err) })
+  // A server that exits early makes our next write fail with EPIPE; report it as
+  // the failed call instead of crashing the registration.
+  child.stdin.on('error', err => { exited = exited || err; failAll(exited) })
   child.on('exit', code => {
     exited = exited || new Error(`codex app-server exited (${code})${stderr ? `: ${stderr.trim()}` : ''}`)
     failAll(exited)

@@ -36,10 +36,18 @@ export function codexHooksPath () {
 }
 
 // The exact command register writes, and the only thing it will ever trust.
+// Codex runs the command through a shell, and double quotes do not stop $(…),
+// backticks or %VAR% expansion, so paths carrying those characters are refused
+// rather than trusted. (Backslash is a path separator only on Windows.)
+const UNSAFE = process.platform === 'win32' ? /["$`%!]/ : /["$`%!\\]/
 export function codexHookCommand (mode, { node = process.execPath, hookScript = HOOK_SCRIPT } = {}) {
-  if ([node, hookScript].some(v => v.includes('"'))) throw new Error('paths containing a double quote are not supported')
+  const bad = [node, hookScript].find(v => UNSAFE.test(v))
+  if (bad) throw new Error(`cannot write a safe hook command for ${bad}: move it to a path without " $ ` + '`' + ` % ! or \\`)
   return `"${node}" "${hookScript}" ${mode} codex`
 }
+
+// A Codex hook entry this adapter wrote (any node or checkout path), and nothing else.
+const isOurCodexHook = command => isOurs(command) && /hook\.js"?\s+(posttool|stop|prompt)\s+codex\s*$/.test(String(command))
 
 export function mcpServerConfig ({ node = process.execPath, server = SERVER } = {}) {
   return {
@@ -74,7 +82,13 @@ export function installCodexHooks (opts = {}) {
   for (const [event, entries] of Object.entries(wanted)) {
     const existing = settings.hooks[event] ?? []
     if (!Array.isArray(existing)) throw new Error(`${file}: hooks.${event} is not a list — fix it by hand first rather than have it overwritten`)
-    const others = existing.filter(e => !(e?.hooks || []).some(h => isOurs(h?.command)))
+    // Remove only our own hooks; a group that also holds someone else's hook keeps it.
+    const others = existing.flatMap(e => {
+      if (!Array.isArray(e?.hooks)) return [e]
+      const kept = e.hooks.filter(h => !isOurCodexHook(h?.command))
+      if (kept.length === e.hooks.length) return [e]
+      return kept.length ? [{ ...e, hooks: kept }] : []
+    })
     settings.hooks[event] = [...others, ...entries]
   }
   const tmp = `${file}.${process.pid}.tmp`

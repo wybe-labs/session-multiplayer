@@ -36,6 +36,20 @@ assert.equal(h.hooks.PostToolUse.length, 1)
 assert.equal(h.hooks.PostToolUse[0].matcher, '.*', 'Codex matchers are regexes')
 assert.equal(h.hooks.UserPromptSubmit.length, 1)
 
+console.log('1b. A group shared with someone else\'s hook keeps theirs; unsafe paths are refused…')
+const mixed = readJson(hooksFile)
+mixed.hooks.Stop[1].hooks.push({ type: 'command', command: 'echo guard' })
+mixed.hooks.Stop.push({ hooks: [{ type: 'command', command: 'echo session-multiplayer/hook.js stop codex-like-but-not-ours' }] })
+fs.writeFileSync(hooksFile, JSON.stringify(mixed))
+installCodexHooks()
+const m2 = readJson(hooksFile).hooks.Stop.flatMap(g => g.hooks.map(x => x.command))
+assert.ok(m2.includes('echo guard'), 'sibling hook in a shared group survives')
+assert.ok(m2.some(c => c.includes('codex-like-but-not-ours')), 'only exact adapter hooks are removed')
+assert.equal(m2.filter(c => c === codexHookCommand('stop')).length, 1, 'ours still once')
+for (const p of ['/x/$(touch pwned)/hook.js', '/x/`id`/hook.js', '/x/%PATH%/hook.js', '/x/a"b/hook.js']) {
+  assert.throws(() => codexHookCommand('stop', { hookScript: p }), /safe hook command/, p)
+}
+
 console.log('2. The MCP server is labelled as Codex and sees the store overrides…')
 const mcp = mcpServerConfig()
 assert.equal(mcp.env.SESSION_MULTIPLAYER_HARNESS, 'codex')
@@ -110,6 +124,10 @@ console.log('7. A missing codex CLI fails fast instead of waiting out the timeou
 const t0 = Date.now()
 await assert.rejects(withAppServer(async () => {}, { bin: path.join(fakeHome, 'no-such-codex') }))
 assert.ok(Date.now() - t0 < 5000, 'rejected quickly')
+// A server that exits at once (stand-in: `false`) is a rejected call, never an uncaught EPIPE.
+if (process.platform !== 'win32') {
+  for (let i = 0; i < 20; i++) await assert.rejects(withAppServer(async () => {}, { bin: 'false' }))
+}
 
 fs.rmSync(fakeHome, { recursive: true, force: true })
 fs.rmSync(project, { recursive: true, force: true })
