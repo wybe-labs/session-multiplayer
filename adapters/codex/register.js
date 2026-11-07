@@ -1,39 +1,36 @@
 // Registers this MCP server with OpenAI Codex CLI: `npm run register:codex`
 //
-// Tries `codex mcp add` first (ships with Codex CLI since early 2026; persists
-// to ~/.codex/config.toml). If the CLI isn't available, prints the exact TOML
-// to paste into ~/.codex/config.toml (or $CODEX_HOME/config.toml) instead.
-//
-// Codex has no hook system, so there is no mid-turn injection: messages land in
-// the inbox and the agent reads them with the check_messages tool. The tool
-// descriptions already tell the model to poll; the AGENTS.md line printed below
-// makes that even more reliable.
-import { spawnSync } from 'node:child_process'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+// User-wide, like the Claude Code adapter: the MCP server in ~/.codex/config.toml
+// and the delivery hooks in ~/.codex/hooks.json, trusted through Codex itself (see
+// install.js). Messages then reach a running Codex session the same way they reach
+// Claude Code: "interrupt" mid-turn, "normal" at turn end, "passive" in the inbox.
+import { installCodex, mcpServerConfig, HOOK_MODES, codexHookCommand, codexHooksPath } from './install.js'
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
-const server = path.join(root, 'src', 'server.js')
-
-const args = ['mcp', 'add', 'session-multiplayer',
-  '--env', 'SESSION_MULTIPLAYER_HARNESS=codex',
-  '--', process.execPath, server]
-
-const isWin = process.platform === 'win32'
-const res = spawnSync(isWin ? 'codex.cmd' : 'codex', args, { stdio: 'inherit', shell: isWin })
-
-if (res.error || res.status !== 0) {
-  console.error('\nCould not run the `codex` CLI automatically. Add this to ~/.codex/config.toml instead:\n')
+try {
+  const r = await installCodex()
+  for (const w of r.warnings) console.log(`NOTE (from Codex): ${typeof w === 'string' ? w : JSON.stringify(w)}`)
+  for (const e of r.errors) console.error(`WARNING (from Codex): ${typeof e === 'string' ? e : JSON.stringify(e)}`)
+  if (!r.mcpSeen) throw new Error('Codex does not show the session-multiplayer MCP server after writing it')
+  if (r.events.length !== HOOK_MODES.length) {
+    throw new Error(`Codex runs only ${r.events.length} of ${HOOK_MODES.length} delivery hooks (${r.events.join(', ') || 'none'}); check ${r.hooksFile} and Codex's /hooks screen`)
+  }
+  console.log(`Registered with Codex: MCP server in ${process.env.CODEX_HOME || '~/.codex'}/config.toml, delivery hooks in ${r.hooksFile}` +
+    (r.trustedNow ? ` (${r.trustedNow} newly trusted)` : ' (already trusted)') + '.')
+  console.log('Restart your Codex session; /mcp should list session-multiplayer.')
+} catch (err) {
+  console.error(`\nCould not register with Codex automatically: ${err.message}\n`)
+  console.error('Add this to ~/.codex/config.toml (or $CODEX_HOME/config.toml) instead:\n')
+  const c = mcpServerConfig()
   console.error('[mcp_servers.session-multiplayer]')
-  console.error(`command = ${JSON.stringify(process.execPath)}`)
-  console.error(`args = [${JSON.stringify(server)}]`)
+  console.error(`command = ${JSON.stringify(c.command)}`)
+  console.error(`args = ${JSON.stringify(c.args)}`)
+  console.error(`env_vars = ${JSON.stringify(c.env_vars)}`)
+  console.error(`startup_timeout_sec = ${c.startup_timeout_sec}`)
   console.error('')
   console.error('[mcp_servers.session-multiplayer.env]')
   console.error('SESSION_MULTIPLAYER_HARNESS = "codex"')
+  console.error(`\nFor live delivery, add these command hooks to ${codexHooksPath()} (PostToolUse with matcher ".*", Stop, UserPromptSubmit) and trust them in Codex's /hooks screen:`)
+  for (const m of HOOK_MODES) console.error(`  ${codexHookCommand(m)}`)
+  console.error('\nWithout the hooks, messages wait in the inbox: add to AGENTS.md "If the session-multiplayer MCP server is available, call its check_messages tool when you start working and after finishing a task."')
   process.exitCode = 1
-} else {
-  console.log('\nRegistered with Codex. Start a Codex session and run /mcp to verify the connection.')
 }
-
-console.log('\nRecommended: add this line to your project or global AGENTS.md so Codex checks its mail:')
-console.log('  "If the session-multiplayer MCP server is available, call its check_messages tool when you start working and after finishing a task — teammates\' sessions may have sent messages."')

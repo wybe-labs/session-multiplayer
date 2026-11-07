@@ -3,7 +3,7 @@
 console.log('session-multiplayer registers per harness. Pick yours:')
 console.log('')
 console.log('  npm run register:claude     Claude Code (MCP server + delivery hooks + /sm-* commands)')
-console.log('  npm run register:codex      OpenAI Codex CLI (MCP server via ~/.codex/config.toml)')
+console.log('  npm run register:codex      OpenAI Codex CLI (MCP server + delivery hooks in ~/.codex)')
 console.log('  npm run register:opencode   OpenCode (MCP server via opencode.json)')
 console.log('')
 console.log('Any other MCP harness: register a stdio server that runs')

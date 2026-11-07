@@ -66,7 +66,7 @@ server.registerTool('join_room', {
 
 server.registerTool('send_message', {
   title: 'Send a message to a room',
-  description: 'Send a plain-text message to a room. Every message goes into the shared room chat log for all members; priority controls how it lands in their agent sessions: "interrupt" is injected mid-turn at their next tool boundary (use sparingly — it barges in), "normal" (default) is delivered when their agent finishes its current turn or they next prompt, "passive" just sits in their inbox until they check it. Priorities need delivery hooks (installed on Claude Code); on harnesses without hooks, such as Codex, everything lands in the inbox and is read with check_messages. To address specific people, pass their display names in "to": only the named recipients get the active priority; everyone else in the room receives the message passively (inbox/chat log only, no interruption). Omit "to" to deliver at the given priority to the whole room. If no peer is online, the message queues locally and delivers on reconnect.',
+  description: 'Send a plain-text message to a room. Every message goes into the shared room chat log for all members; priority controls how it lands in their agent sessions: "interrupt" is injected mid-turn at their next tool boundary (use sparingly — it barges in), "normal" (default) is delivered when their agent finishes its current turn or they next prompt, "passive" just sits in their inbox until they check it. Priorities need delivery hooks (installed on Claude Code and Codex); on harnesses without hooks, everything lands in the inbox and is read with check_messages. To address specific people, pass their display names in "to": only the named recipients get the active priority; everyone else in the room receives the message passively (inbox/chat log only, no interruption). Omit "to" to deliver at the given priority to the whole room. If no peer is online, the message queues locally and delivers on reconnect.',
   inputSchema: {
     room_name: z.string().describe('Room to send to'),
     message: z.string().describe('Plain text message (no files or commands)'),
@@ -91,7 +91,7 @@ server.registerTool('send_message', {
 
 server.registerTool('check_messages', {
   title: 'Check for new messages',
-  description: 'Fetch and clear all unread messages from all rooms — including passive ones that are never auto-delivered. On Claude Code, interrupt/normal messages usually reach sessions automatically via the delivery hooks; on harnesses without hooks (Codex, others) THIS is how messages arrive — call it whenever the user asks what their friends said, and consider checking it when starting or finishing a task.',
+  description: 'Fetch and clear all unread messages from all rooms — including passive ones that are never auto-delivered. On Claude Code and Codex, interrupt/normal messages usually reach sessions automatically via the delivery hooks; on harnesses without hooks THIS is how messages arrive — call it whenever the user asks what their friends said, and consider checking it when starting or finishing a task.',
   inputSchema: {}
 }, async () => {
   const msgs = store.drainInbound()
