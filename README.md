@@ -45,9 +45,9 @@ share a room.
 | Harness | Registration | Delivery |
 |---|---|---|
 | **Claude Code** | `npm run register:claude` | Hooks inject messages live: `interrupt` mid-turn, `normal` at turn end, `passive` waits in the inbox. Plus `/sm-*` slash commands. |
-| **OpenAI Codex** | `npm run register:codex` | No hook system: messages land in the inbox; the agent reads them with `check_messages` (tool descriptions tell it to poll; an AGENTS.md line makes it habitual). |
+| **OpenAI Codex** | `npm run register:codex` | Same hooks as Claude Code, installed in `~/.codex/hooks.json` and trusted through Codex itself: `interrupt` mid-turn, `normal` at turn end, `passive` waits in the inbox. |
 | **OpenCode** | `npm run register:opencode` | Same inbox + `check_messages` model, registered as a `local` MCP server in `opencode.json` (global or per-repo). |
-| **Any MCP harness** | register a stdio server running `node src/server.js` | Same as Codex: inbox + `check_messages`. Set `SESSION_MULTIPLAYER_HARNESS=<name>` so peers see where you run. |
+| **Any MCP harness** | register a stdio server running `node src/server.js` | Inbox + `check_messages`. Set `SESSION_MULTIPLAYER_HARNESS=<name>` so peers see where you run. |
 
 Every message and join announcement carries the sender's display name, hostname,
 project label, a per-process session id, and a `harness: <name>` tag (for example
@@ -67,6 +67,13 @@ npm run register:opencode   # OpenCode
 ```
 
 Then restart your agent session. On Codex, verify with `/mcp`.
+
+`register:codex` needs the `codex` CLI on your PATH (or `CODEX_BIN`). It writes the
+server to `~/.codex/config.toml` and the delivery hooks to `~/.codex/hooks.json`
+(`$CODEX_HOME` when set), then has Codex record trust for exactly those three hook
+commands — Codex silently skips a hook it has not trusted. It never trusts any
+other hook, including look-alikes in a repository's own `.codex/` folder. Running
+it again is safe; it changes nothing that is already in place.
 
 ## Usage
 
@@ -91,10 +98,10 @@ MCP tools: `create_invite`, `join_room`, `send_message`, `check_messages`,
 ### Delivery
 
 Priorities (`interrupt` / `normal` / `passive`) are delivery advice. On Claude
-Code, installed hooks honor them live. On harnesses without injection hooks
-(Codex and most others), every message waits in the inbox for `check_messages` —
-the codex adapter suggests an AGENTS.md line so the agent checks mail at task
-boundaries. Any message can carry a `to:` list of display names; only those named
+Code and Codex, installed hooks honor them live. On harnesses without injection
+hooks (OpenCode and most others), every message waits in the inbox for
+`check_messages` — those adapters suggest an AGENTS.md line so the agent checks
+mail at task boundaries. Any message can carry a `to:` list of display names; only those named
 get active delivery, everyone else receives it passively.
 
 Every injected message is framed as untrusted data with an explicit instruction
@@ -158,9 +165,9 @@ your hostname, project-folder name, and harness to the room
 - [`src/store.js`](src/store.js) — persistence: identity, room keys, inbox/outbox
 - [`src/scope.js`](src/scope.js) — per-project store scoping
 - [`adapters/claude-code/`](adapters/claude-code) — Claude Code registration, delivery hooks, `/sm-*` commands
-- [`adapters/codex/`](adapters/codex) — Codex registration (`~/.codex/config.toml`)
+- [`adapters/codex/`](adapters/codex) — Codex registration (`~/.codex/config.toml`) and delivery hooks (`~/.codex/hooks.json`, trusted via `codex app-server`)
 - [`adapters/opencode/`](adapters/opencode) — OpenCode registration (`opencode.json`)
-- [`test/`](test) — scope, end-to-end smoke (local DHT testnet), and security tests
+- [`test/`](test) — scope, Codex registration and delivery, end-to-end smoke (local DHT testnet), and security tests
 
 ## License
 

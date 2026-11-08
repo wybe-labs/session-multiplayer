@@ -12,10 +12,27 @@ import path from 'node:path'
 import { scopedDir } from '../../src/scope.js'
 
 const mode = process.argv[2]
+// Codex runs these same hooks (its hook protocol is Claude-compatible) with a
+// trailing "codex" argument; see adapters/codex/install.js.
+const codex = process.argv[3] === 'codex'
+const input = (mode === 'stop' || codex) ? parseJson(readStdin()) : {}
+// Codex sets no CLAUDE_PROJECT_DIR, and one inherited from wherever Codex was
+// launched would name the wrong project. The project is the session's cwd, which
+// Codex reports on stdin and is also where it starts the MCP server (resolved,
+// as the server's process.cwd() is).
+if (codex) process.env.CLAUDE_PROJECT_DIR = realDir(typeof input.cwd === 'string' && input.cwd ? input.cwd : process.cwd())
 // Same per-project scoping as the MCP server (src/scope.js): hooks run in the
 // project directory with CLAUDE_PROJECT_DIR set, so this drains only the inbox
 // of rooms THIS project joined — never mail belonging to other projects.
 const inbox = path.join(scopedDir(), 'inbox')
+
+function parseJson (s) {
+  try { return JSON.parse(s) || {} } catch { return {} }
+}
+
+function realDir (p) {
+  try { return fs.realpathSync(p) } catch { return path.resolve(p) }
+}
 
 function drain (priorities) {
   let files
@@ -87,8 +104,7 @@ if (mode === 'posttool') {
     }))
   }
 } else if (mode === 'stop') {
-  let stopHookActive = false
-  try { stopHookActive = JSON.parse(readStdin()).stop_hook_active === true } catch {}
+  const stopHookActive = input.stop_hook_active === true
   // Never loop: if we already blocked this stop once, let it finish.
   const msgs = stopHookActive ? [] : drain(['interrupt', 'normal'])
   if (msgs.length > 0) {

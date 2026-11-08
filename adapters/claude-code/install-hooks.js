@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url'
 // Recognize our own hook entries regardless of how the repo folder is spelled
 // (session-multiplayer, SessionMultiplayer, …): normalize case and hyphens, and
 // require the hook script name so unrelated commands can't match.
-function isOurs (command) {
+export function isOurs (command) {
   const c = String(command || '').toLowerCase().replace(/-/g, '')
   return c.includes('sessionmultiplayer') && c.includes('hook.js')
 }
