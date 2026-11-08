@@ -40,11 +40,16 @@ console.log('1b. A group shared with someone else\'s hook keeps theirs; unsafe p
 const mixed = readJson(hooksFile)
 mixed.hooks.Stop[1].hooks.push({ type: 'command', command: 'echo guard' })
 mixed.hooks.Stop.push({ hooks: [{ type: 'command', command: 'echo session-multiplayer/hook.js stop codex-like-but-not-ours' }] })
+mixed.hooks.Stop.push({ hooks: [{ type: 'command', command: 'echo session-multiplayer/hook.js stop codex' }] })
+// An older registration from another node/checkout path is ours and gets replaced.
+mixed.hooks.Stop.push({ hooks: [{ type: 'command', command: '"/old/node" "/old/session-multiplayer/adapters/claude-code/hook.js" stop codex' }] })
 fs.writeFileSync(hooksFile, JSON.stringify(mixed))
 installCodexHooks()
 const m2 = readJson(hooksFile).hooks.Stop.flatMap(g => g.hooks.map(x => x.command))
 assert.ok(m2.includes('echo guard'), 'sibling hook in a shared group survives')
 assert.ok(m2.some(c => c.includes('codex-like-but-not-ours')), 'only exact adapter hooks are removed')
+assert.ok(m2.includes('echo session-multiplayer/hook.js stop codex'), 'a command that merely ends like ours is kept')
+assert.ok(!m2.some(c => c.includes('/old/node')), 'a stale registration of ours is replaced')
 assert.equal(m2.filter(c => c === codexHookCommand('stop')).length, 1, 'ours still once')
 for (const p of ['/x/$(touch pwned)/hook.js', '/x/`id`/hook.js', '/x/%PATH%/hook.js', '/x/a"b/hook.js']) {
   assert.throws(() => codexHookCommand('stop', { hookScript: p }), /safe hook command/, p)

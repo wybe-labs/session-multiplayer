@@ -46,8 +46,10 @@ export function codexHookCommand (mode, { node = process.execPath, hookScript = 
   return `"${node}" "${hookScript}" ${mode} codex`
 }
 
-// A Codex hook entry this adapter wrote (any node or checkout path), and nothing else.
-const isOurCodexHook = command => isOurs(command) && /hook\.js"?\s+(posttool|stop|prompt)\s+codex\s*$/.test(String(command))
+// A Codex hook entry this adapter wrote, from any node or checkout path, and nothing
+// else: exactly `"<node>" "<checkout>/adapters/claude-code/hook.js" <mode> codex`.
+const OUR_CODEX_HOOK = /^"[^"]+" "[^"]*[\\/]adapters[\\/]claude-code[\\/]hook\.js" (posttool|stop|prompt) codex$/
+const isOurCodexHook = command => OUR_CODEX_HOOK.test(String(command)) && isOurs(command)
 
 export function mcpServerConfig ({ node = process.execPath, server = SERVER } = {}) {
   return {
