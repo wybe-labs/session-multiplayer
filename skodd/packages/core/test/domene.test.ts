@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   eksMva, inklMva, kr, formatKr, tilKroner,
-  paskedag, andrePaskedag, piggfrist, piggErLov, sesongFor, skiftvinduer, nesteVindu, aksentSesong,
+  paskedag, andrePaskedag, piggfrist, piggErLov, sesongFor, skiftvinduer, nesteVindu, nesteVinduFor, aksentSesong,
   normaliserRegnr, erGyldigRegnr, visRegnr, parseDimensjon, visDimensjon, UgyldigRegnr,
   lagTilbud, velgPakke, PAKKER, VILKAR, sammenlignMedIDag, utkjopRestverdi,
   settMinMm, slitasjerate, prognose, monsterTekst, finnAvvik, SKODD_GRENSE_MM, type Maling,
@@ -51,6 +51,17 @@ test('skiftvinduene er seks uker og ender på fristen', () => {
   assert.equal(neste.monterer, 'sommer');
   const etterVar = nesteVindu(new Date('2027-06-01T00:00:00Z'));
   assert.equal(etterVar.monterer, 'vinter');
+});
+
+test('neste skift for en bil hopper over vinduet den er ferdig med', () => {
+  const midtIHost = new Date('2026-11-12T00:00:00Z');
+  // Vinterdekkene er alt på: neste skift er våren.
+  assert.equal(nesteVinduFor('vinter', midtIHost).monterer, 'sommer');
+  assert.equal(nesteVinduFor('vinter', midtIHost).start.getUTCFullYear(), 2027);
+  // Sommerdekkene står fortsatt på: høstvinduet som pågår gjelder.
+  const host = nesteVinduFor('sommer', midtIHost);
+  assert.equal(host.monterer, 'vinter');
+  assert.equal(host.start.getUTCFullYear(), 2026);
 });
 
 test('registreringsnummer og dimensjon', () => {

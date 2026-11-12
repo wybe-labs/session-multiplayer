@@ -1,7 +1,7 @@
 /** Påmelding, tillegg og oppsigelse. */
 import { and, desc, eq, sql } from 'drizzle-orm';
 import {
-  PAKKER, TILLEGG, VILKAR, lagTilbud, utkjopRestverdi, nesteVindu, sesongFor,
+  PAKKER, TILLEGG, VILKAR, lagTilbud, utkjopRestverdi, nesteVindu, nesteVinduFor, sesongFor,
   prognose, slitasjerate, settMinMm, monsterTekst, type Maling, type OpprettAbonnement,
   type TilleggId, type Ore,
 } from '@skodd/core';
@@ -316,7 +316,7 @@ export async function hentOversikt(db: Db, abonnementId: string, na = new Date()
     sesongNa: sesong,
     monster,
     nesteVindu: (() => {
-      const v = nesteVindu(na);
+      const v = nesteVinduFor(paBil?.sesong ?? sesong, na);
       return { monterer: v.monterer, start: v.start.toISOString().slice(0, 10), slutt: v.slutt.toISOString().slice(0, 10) };
     })(),
   };

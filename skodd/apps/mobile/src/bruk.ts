@@ -1,5 +1,6 @@
 /** Små hooks for datahenting. Ingen cache-bibliotek: appen har få skjermer. */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 import { api, ApiFeil, type Oversikt } from './api.ts';
 
 export interface Hentet<T> {
@@ -27,7 +28,9 @@ export function useHentet<T>(hent: () => Promise<T>, avhengigheter: unknown[] = 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, avhengigheter);
 
-  useEffect(() => { void last(); }, [last]);
+  // Hentes på nytt hver gang skjermen får fokus, så en fane eller en skjerm
+  // lenger ned i bunken aldri viser tall fra før siste endring.
+  useFocusEffect(useCallback(() => { void last(); }, [last]));
   return { data, laster, feil, last };
 }
 

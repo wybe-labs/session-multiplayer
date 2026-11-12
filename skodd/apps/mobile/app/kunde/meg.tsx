@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Platform, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { TILLEGG, VILKAR, type TilleggId } from '@skodd/core';
 import { Skjerm } from '../../src/komponenter/Skjerm.tsx';
@@ -24,6 +24,7 @@ export default function Meg() {
   const [navn, settNavn] = useState(bruker?.navn ?? '');
   const [lagrer, settLagrer] = useState(false);
   const [melding, settMelding] = useState<string | null>(null);
+  const [bekrefter, settBekrefter] = useState(false);
 
   const harFelg = (data?.abonnement.tillegg ?? []).includes('felg_pluss');
 
@@ -48,32 +49,21 @@ export default function Meg() {
     }
   };
 
+  const utkjop = oppsigelse.data?.utkjopOre ?? 0;
+  const oppsigelseTekst = utkjop > 0
+    ? `Du er i bindingstiden. Du kjøper ut restverdien av dekkene vi har kjøpt til deg: ${formatterKr(utkjop)}.`
+    : 'Abonnementet avsluttes ved neste månedsskifte. Vi avtaler hva som skjer med settet på lager.';
+
   const siOpp = async () => {
     if (!data) return;
-    const utkjop = oppsigelse.data?.utkjopOre ?? 0;
-    const tekst = utkjop > 0
-      ? `Du er i bindingstiden. Du kjøper ut restverdien av dekkene vi har kjøpt til deg: ${formatterKr(utkjop)}.`
-      : 'Abonnementet avsluttes ved neste månedsskifte. Vi henter settet som står på lager.';
-
-    const bekreft = async () => {
-      try {
-        await api.sigOpp(data.abonnement.id);
-        await last();
-        settMelding('Abonnementet er sagt opp. Vi tar kontakt om settene.');
-      } catch (e) {
-        settMelding(e instanceof ApiFeil ? e.message : 'Fikk ikke sagt opp.');
-      }
-    };
-
-    if (Platform.OS === 'web') {
-      // Alert har ingen knapper på web.
-      if (globalThis.confirm?.(`${tekst}\n\nSi opp abonnementet?`)) await bekreft();
-      return;
+    try {
+      await api.sigOpp(data.abonnement.id);
+      settBekrefter(false);
+      await last();
+      settMelding('Abonnementet er sagt opp. Vi tar kontakt om settene.');
+    } catch (e) {
+      settMelding(e instanceof ApiFeil ? e.message : 'Fikk ikke sagt opp.');
     }
-    Alert.alert('Si opp abonnementet', tekst, [
-      { text: 'Avbryt', style: 'cancel' },
-      { text: 'Si opp', style: 'destructive', onPress: () => void bekreft() },
-    ]);
   };
 
   return (
@@ -141,7 +131,17 @@ export default function Meg() {
               <Text style={t.brod}>Du er ute av bindingstiden og kan si opp uten utkjøp.</Text>
             )}
             <Skille />
-            <Knapp tittel="Si opp abonnementet" variant="fare" onPress={() => void siOpp()} />
+            {data.abonnement.status === 'oppsagt' ? (
+              <Text style={t.brod}>Abonnementet er sagt opp.</Text>
+            ) : bekrefter ? (
+              <>
+                <Text style={t.brod}>{oppsigelseTekst}</Text>
+                <Knapp tittel="Ja, si opp" variant="fare" onPress={() => void siOpp()} />
+                <Knapp tittel="Behold abonnementet" variant="sekundar" onPress={() => settBekrefter(false)} />
+              </>
+            ) : (
+              <Knapp tittel="Si opp abonnementet" variant="fare" onPress={() => settBekrefter(true)} />
+            )}
           </Kort>
         </>
       ) : null}

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
@@ -42,6 +42,12 @@ export default function JobbSkjerm() {
   const [feil, settFeil] = useState<string | null>(null);
   const [ferdig, settFerdig] = useState<{ monsterTekst: string; maBytteSett: boolean } | null>(null);
 
+  useEffect(() => {
+    if (jobb) settHjul(tomtSett(jobb.monterer));
+  // Bare når jobben blir kjent, ikke ved hver tegning.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobb?.id]);
+
   const avvik = useMemo(
     () => finnAvvik({ dekksettId: 'ny', kmStand: 0, maltDato: new Date(), hjul }, monterer),
     [hjul, monterer],
@@ -80,7 +86,7 @@ export default function JobbSkjerm() {
       <Skjerm
         tittel="Skiftet er registrert"
         undertittel="Kunden har fått SMS med mønsterdybden."
-        bunn={<Knapp tittel="Tilbake til ruten" aksent={aksent} onPress={() => router.replace('/montor/dagen')} />}
+        bunn={<Knapp tittel="Tilbake til ruten" aksent={aksent} onPress={() => router.dismissTo('/montor/dagen')} />}
       >
         <Kort tittel="Sendt til kunden">
           <Text style={t.brod}>{ferdig.monsterTekst}</Text>

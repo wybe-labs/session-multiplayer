@@ -6,16 +6,19 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ActivityIndicator, View } from 'react-native';
 import { AuthTilbyder } from '../src/auth.tsx';
+import { ER_DEMO } from '../src/api.ts';
 import { PameldingTilbyder } from '../src/pamelding.tsx';
 import { aksentNa, farge } from '../src/tema.ts';
 
 export default function Rotoppsett() {
-  const [fonterKlare] = useFonts({
+  // I demobygget er fontene lagt inn i selve siden, så det er ingenting å laste.
+  const [lastet, feilet] = useFonts(ER_DEMO ? {} : {
     SpaceGrotesk_500Medium, SpaceGrotesk_700Bold,
     Inter_400Regular, Inter_500Medium, Inter_600SemiBold,
   });
 
-  if (!fonterKlare) {
+  // En font som ikke lar seg laste skal gi systemfont, ikke en evig spinner.
+  if (!lastet && !feilet) {
     return (
       <View style={{ flex: 1, backgroundColor: farge.bakgrunn, alignItems: 'center', justifyContent: 'center' }}>
         <ActivityIndicator color={aksentNa()} />

@@ -17,7 +17,8 @@
     "dev:api": "npm run dev -w @skodd/api",
     "db:migrate": "npm run migrate -w @skodd/api",
     "db:seed": "npm run seed -w @skodd/api",
-    "preview": "cd apps/mobile && EXPO_PUBLIC_API_BASE=/ npx expo export --platform web --output-dir dist && cd ../.. && node infra/forhandsvisning.mjs apps/mobile/dist"
+    "preview": "cd apps/mobile && EXPO_PUBLIC_API_BASE=/ npx expo export --platform web --output-dir dist && cd ../.. && node infra/forhandsvisning.mjs apps/mobile/dist",
+    "demo": "cd apps/mobile && EXPO_PUBLIC_DEMO=1 npx expo export --platform web --output-dir dist-demo --clear && cd ../.. && node infra/lag-demoside.mjs apps/mobile/dist-demo skodd-appen.html"
   },
   "license": "UNLICENSED"
 }

@@ -4,7 +4,7 @@ import { Skjerm } from '../../src/komponenter/Skjerm.tsx';
 import { Felt } from '../../src/komponenter/Felt.tsx';
 import { Knapp } from '../../src/komponenter/Knapp.tsx';
 import { Text } from '../../src/komponenter/Text.tsx';
-import { api, ApiFeil } from '../../src/api.ts';
+import { api, ApiFeil, ER_DEMO } from '../../src/api.ts';
 import { useAuth } from '../../src/auth.tsx';
 import { aksentNa, t } from '../../src/tema.ts';
 
@@ -29,7 +29,7 @@ export default function KodeSkjerm() {
     settLaster(true);
     try {
       const rolle = await loggInn(telefon, kode);
-      if (retur === 'bekreft') router.replace('/start/bekreft');
+      if (retur === 'bekreft') router.dismissTo('/start/bekreft');
       else router.replace(rolle === 'montor' ? '/montor/dagen' : '/kunde/hjem');
     } catch (e) {
       settFeil(e instanceof ApiFeil ? (FORKLARING[e.message] ?? e.message) : 'Noe gikk galt. Prøv igjen.');
@@ -50,7 +50,7 @@ export default function KodeSkjerm() {
   return (
     <Skjerm
       tittel="Koden"
-      undertittel={`Sendt til ${telefon}. Den varer i fem minutter.`}
+      undertittel={ER_DEMO ? `Til ${telefon}.` : `Sendt til ${telefon}. Den varer i fem minutter.`}
       bunn={
         <>
           <Knapp tittel="Logg inn" aksent={aksent} av={kode.length !== 6} laster={laster} onPress={bekreft} />
@@ -68,7 +68,9 @@ export default function KodeSkjerm() {
         maxLength={6}
         feil={feil}
       />
-      <Text style={t.liten}>Får du ingen kode, sjekk at nummeret er riktig.</Text>
+      <Text style={t.liten}>
+        {ER_DEMO ? 'Demo: koden er 123456. Ingen SMS sendes.' : 'Får du ingen kode, sjekk at nummeret er riktig.'}
+      </Text>
     </Skjerm>
   );
 }

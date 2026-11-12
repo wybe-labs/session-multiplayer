@@ -7,7 +7,7 @@
  */
 import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import {
-  skiftvinduer, nesteVindu, planleggRute, bestarGate3, vurderGate, settMinMm,
+  skiftvinduer, nesteVinduFor, planleggRute, bestarGate3, vurderGate, settMinMm,
   slitasjerate, prognose, monsterTekst, finnAvvik, SKODD_GRENSE_MM, VILKAR,
   type Jobb as RuteJobb, type Sted as RuteSted, type Maling, type FullforJobb,
   type Noktall, type GateId, type Rute,
@@ -278,7 +278,7 @@ export async function fullforJobb(
     });
   }
 
-  const vindu = nesteVindu(new Date(na.getTime() + 86_400_000 * 30));
+  const vindu = nesteVinduFor(pattSett.sesong, na);
   const [kunde] = await db.select().from(kunder).where(eq(kunder.id, abo.kundeId));
   const tekst = monsterTekst(p);
   if (kunde) {

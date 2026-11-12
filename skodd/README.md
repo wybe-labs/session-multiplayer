@@ -40,6 +40,11 @@ Da ligger app og API bak samme port, og du logger inn med koden `123456`.
 Etter `npm run db:seed` finnes kunden `910 00 001` og montøren `900 00 002`.
 Den faste koden ignoreres alltid når `NODE_ENV=production`.
 
+Eller helt uten server: `npm run demo` lager `skodd-appen.html`, én selvstendig
+fil med appen, fontene og demodata. Pris, sesong og mønster regnes fortsatt ut
+av `@skodd/core`; bare lagringen er i minnet og nullstilles når siden lastes på
+nytt. Koden er `123456`.
+
 Uten konfigurasjon kjører alt lokalt uten eksterne avhengigheter: Postgres i
 prosessen (PGlite), falskt kjøretøyregister, mock betaling og mock SMS.
 I utvikling skrives engangskoden til innlogging i serverloggen, så du kommer

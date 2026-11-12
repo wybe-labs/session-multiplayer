@@ -4,7 +4,8 @@ import { Skjerm } from '../../src/komponenter/Skjerm.tsx';
 import { Felt } from '../../src/komponenter/Felt.tsx';
 import { Knapp } from '../../src/komponenter/Knapp.tsx';
 import { Text } from '../../src/komponenter/Text.tsx';
-import { api, ApiFeil } from '../../src/api.ts';
+import { api, ApiFeil, ER_DEMO } from '../../src/api.ts';
+import { Kort } from '../../src/komponenter/Kort.tsx';
 import { aksentNa, t } from '../../src/tema.ts';
 
 export default function TelefonSkjerm() {
@@ -50,6 +51,13 @@ export default function TelefonSkjerm() {
       <Text style={t.liten}>
         Nummeret brukes til innlogging og til meldinger om skift. Vi sender ikke reklame.
       </Text>
+      {ER_DEMO ? (
+        <Kort tittel="Demo">
+          <Text style={t.liten}>Velg en ferdig bruker, eller skriv et eget nummer for å starte som ny kunde.</Text>
+          <Knapp tittel="Kunde med målinger" undertekst="910 00 001" variant="sekundar" onPress={() => settTelefon('910 00 001')} />
+          <Knapp tittel="Montør med dagens rute" undertekst="900 00 002" variant="sekundar" onPress={() => settTelefon('900 00 002')} />
+        </Kort>
+      ) : null}
     </Skjerm>
   );
 }

@@ -1,5 +1,7 @@
 /** Typet klient mot Skodd-API-et. Ett sted for alle kall. */
 import Constants from 'expo-constants';
+import { ApiFeil, hentGjeldendeToken } from './klient.ts';
+import { demoApi } from './demo.ts';
 import type {
   Dekkdimensjon, HjulMaling, PakkeId, Pakke, Tillegg, TilleggId, Tilbud, Sammenligning,
   Kjoretoy, Sesong, Stedstype, Adresse,
@@ -11,26 +13,17 @@ const base: string = (
   ?? 'http://localhost:8080'
 ).replace(/\/$/, '');
 
-export class ApiFeil extends Error {
-  constructor(
-    public readonly status: number,
-    melding: string,
-    public readonly detaljer?: { felt: string; melding: string }[],
-  ) {
-    super(melding);
-    this.name = 'ApiFeil';
-  }
-}
+export { ApiFeil, settToken } from './klient.ts';
 
-let token: string | null = null;
-export const settToken = (nytt: string | null): void => { token = nytt; };
+/** Demomodus kjører appen uten server. Se demo.ts. */
+export const ER_DEMO = process.env.EXPO_PUBLIC_DEMO === '1';
 
 async function kall<T>(sti: string, valg: { metode?: string; kropp?: unknown } = {}): Promise<T> {
   const svar = await fetch(`${base}/v1${sti}`, {
     method: valg.metode ?? 'GET',
     headers: {
       ...(valg.kropp ? { 'content-type': 'application/json' } : {}),
-      ...(token ? { authorization: `Bearer ${token}` } : {}),
+      ...(hentGjeldendeToken() ? { authorization: `Bearer ${hentGjeldendeToken()}` } : {}),
     },
     ...(valg.kropp ? { body: JSON.stringify(valg.kropp) } : {}),
   });
@@ -79,7 +72,7 @@ export interface MontorJobb {
   merknad: string | null;
 }
 
-export const api = {
+const ekte = {
   pakker: () => kall<{ pakker: Pakke[]; tillegg: Tillegg[]; vilkar: Record<string, number>; merkevare: { lofte: string } }>('/pakker'),
 
   tilbud: (kropp: { regnr: string; kmPerAr?: number; tillegg?: TilleggId[]; kampanjekode?: string }) =>
@@ -166,3 +159,6 @@ export const api = {
     nesteVindu: { monterer: string; start: string };
   }>(`/montor/jobber/${id}/fullfor`, { metode: 'POST', kropp }),
 };
+
+export type Api = typeof ekte;
+export const api: Api = ER_DEMO ? demoApi : ekte;

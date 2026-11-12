@@ -103,5 +103,21 @@ export function nesteVindu(fra: Date, region: Region = 'sor'): SkiftVindu {
   return treff ?? kandidater[kandidater.length - 1]!;
 }
 
+/**
+ * Neste skift for en bestemt bil: første vindu som monterer det settet som
+ * ikke står på bilen. En bil som alt har fått vinterdekkene på i høstvinduet
+ * skal se vårvinduet, ikke det vinduet den nettopp er ferdig med.
+ */
+export function nesteVinduFor(paBil: Sesong, fra: Date, region: Region = 'sor'): SkiftVindu {
+  const ar = fra.getUTCFullYear();
+  const kandidater = [
+    ...skiftvinduer(ar, region),
+    ...skiftvinduer(ar + 1, region),
+    ...skiftvinduer(ar + 2, region),
+  ];
+  const treff = kandidater.find((v) => v.slutt >= fra && v.monterer !== paBil);
+  return treff ?? kandidater[kandidater.length - 1]!;
+}
+
 export const dagerTil = (dato: Date, fra: Date = new Date()): number =>
   Math.ceil((dato.getTime() - fra.getTime()) / DAG);

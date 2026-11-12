@@ -4,3 +4,5 @@ dist/
 .env
 *.log
 data/
+dist-demo/
+skodd-appen.html
