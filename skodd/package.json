@@ -1,0 +1,20 @@
+{
+  "name": "skodd",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Skodd - dekk som abonnement. Monorepo: domenekjerne, API og mobilapp.",
+  "workspaces": [
+    "packages/*",
+    "apps/api"
+  ],
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "build": "npm run build -w @skodd/core && npm run build -w @skodd/api",
+    "test": "npm run test -w @skodd/core && npm run test -w @skodd/api",
+    "typecheck": "npm run typecheck -w @skodd/core && npm run typecheck -w @skodd/api",
+    "dev:api": "npm run dev -w @skodd/api",
+    "db:migrate": "npm run migrate -w @skodd/api",
+    "db:seed": "npm run seed -w @skodd/api"
+  },
+  "license": "UNLICENSED"
+}

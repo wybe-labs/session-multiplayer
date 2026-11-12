@@ -1,0 +1,44 @@
+name: Skodd CI
+
+on:
+  push:
+    paths: ['skodd/**', '.github/workflows/ci.yml']
+  pull_request:
+    paths: ['skodd/**']
+
+defaults:
+  run:
+    working-directory: skodd
+
+jobs:
+  kjerne-og-api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: skodd/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+  mobil:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: skodd/apps/mobile/package-lock.json
+      - run: npm ci
+        working-directory: skodd/apps/mobile
+      - run: npx tsc --noEmit
+        working-directory: skodd/apps/mobile
+      - name: Bundle appen (web) for å fange byggefeil
+        run: npx expo export --platform web --output-dir /tmp/web
+        working-directory: skodd/apps/mobile
+        env:
+          EXPO_NO_TELEMETRY: '1'

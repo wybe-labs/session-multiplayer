@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "Skodd",
+    "slug": "skodd",
+    "version": "0.1.0",
+    "scheme": "skodd",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#121314",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "no.skodd.app"
+    },
+    "android": {
+      "package": "no.skodd.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#121314",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": ["expo-router", "expo-secure-store", "expo-font"],
+    "extra": {
+      "apiBase": "http://localhost:8080"
+    }
+  }
+}
