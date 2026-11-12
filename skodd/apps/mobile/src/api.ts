@@ -5,8 +5,11 @@ import type {
   Kjoretoy, Sesong, Stedstype, Adresse,
 } from '@skodd/core';
 
-const base: string =
-  (Constants.expoConfig?.extra?.['apiBase'] as string | undefined) ?? 'http://localhost:8080';
+const base: string = (
+  process.env.EXPO_PUBLIC_API_BASE
+  ?? (Constants.expoConfig?.extra?.['apiBase'] as string | undefined)
+  ?? 'http://localhost:8080'
+).replace(/\/$/, '');
 
 export class ApiFeil extends Error {
   constructor(

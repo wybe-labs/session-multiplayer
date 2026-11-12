@@ -29,6 +29,17 @@ npm install
 npm start                # Expo: i, a eller w
 ```
 
+Vil du bare se appen i en nettleser, uten Expo på telefonen:
+
+```bash
+UTVIKLING_FAST_KODE=123456 npm run dev:api     # i ett vindu
+npm run preview                                # i et annet: http://localhost:8070
+```
+
+Da ligger app og API bak samme port, og du logger inn med koden `123456`.
+Etter `npm run db:seed` finnes kunden `910 00 001` og montøren `900 00 002`.
+Den faste koden ignoreres alltid når `NODE_ENV=production`.
+
 Uten konfigurasjon kjører alt lokalt uten eksterne avhengigheter: Postgres i
 prosessen (PGlite), falskt kjøretøyregister, mock betaling og mock SMS.
 I utvikling skrives engangskoden til innlogging i serverloggen, så du kommer

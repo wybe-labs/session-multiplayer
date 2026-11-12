@@ -7,14 +7,17 @@
     "packages/*",
     "apps/api"
   ],
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "build": "npm run build -w @skodd/core && npm run build -w @skodd/api",
     "test": "npm run test -w @skodd/core && npm run test -w @skodd/api",
     "typecheck": "npm run typecheck -w @skodd/core && npm run typecheck -w @skodd/api",
     "dev:api": "npm run dev -w @skodd/api",
     "db:migrate": "npm run migrate -w @skodd/api",
-    "db:seed": "npm run seed -w @skodd/api"
+    "db:seed": "npm run seed -w @skodd/api",
+    "preview": "cd apps/mobile && EXPO_PUBLIC_API_BASE=/ npx expo export --platform web --output-dir dist && cd ../.. && node infra/forhandsvisning.mjs apps/mobile/dist"
   },
   "license": "UNLICENSED"
 }

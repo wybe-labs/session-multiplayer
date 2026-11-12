@@ -5,14 +5,15 @@ import { MELDINGER } from '../adapters/sms.ts';
 import { logg } from '../tjenester/hendelse.ts';
 
 export const authRuter: FastifyPluginAsync = async (app) => {
-  // Engangskoder er et åpenbart misbruksmål, så de er strengt rangert.
-  // I test slås grensen av, og dekkes av en egen test mot produksjonsoppsettet.
-  const itest = app.skodd.env.NODE_ENV === 'test';
-  const grense = (max: number) => ({ rateLimit: { max: itest ? 10_000 : max, timeWindow: '10 minutes' } });
+  // Engangskoder er et åpenbart misbruksmål, så de er strengt rangert i drift.
+  // Utenfor drift slås grensen av, og dekkes av en egen test mot produksjonsoppsettet.
+  const idrift = app.skodd.env.NODE_ENV === 'production';
+  const grense = (max: number) => ({ rateLimit: { max: idrift ? max : 10_000, timeWindow: '10 minutes' } });
+  const fastKode = idrift ? undefined : app.skodd.env.UTVIKLING_FAST_KODE;
 
   app.post('/auth/kode', { config: grense(5) }, async (req) => {
     const { telefon } = sendKodeSchema.parse(req.body);
-    const kode = lagKode();
+    const kode = fastKode ?? lagKode();
     await lagreKode(app.skodd.db, telefon, kode, app.skodd.env.KODE_PEPPER);
     await app.skodd.sms.send({ til: telefon, type: 'engangskode', tekst: MELDINGER.engangskode(kode) });
     // I utvikling skrives koden i serverloggen, så man kan logge inn uten SMS-avtale.
