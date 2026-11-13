@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.expo/
+.env
+*.log
+data/
+dist-demo/
+skodd-appen.html

@@ -1,0 +1,37 @@
+# Lokal drift: Postgres og API. Migrasjoner kjøres ved oppstart av API-et.
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: skodd
+      POSTGRES_PASSWORD: skodd
+      POSTGRES_DB: skodd
+    ports: ['5432:5432']
+    volumes: ['skodd-db:/var/lib/postgresql/data']
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U skodd']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    environment:
+      DATABASE_URL: postgres://skodd:skodd@db:5432/skodd
+      JWT_HEMMELIGHET: ${JWT_HEMMELIGHET:-bytt-denne-i-drift-minst-16-tegn}
+      KODE_PEPPER: ${KODE_PEPPER:-bytt-denne-ogsa}
+      NODE_ENV: ${NODE_ENV:-development}
+      SVV_API_NOKKEL: ${SVV_API_NOKKEL:-}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      SMS_URL: ${SMS_URL:-}
+      SMS_NOKKEL: ${SMS_NOKKEL:-}
+    ports: ['8080:8080']
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  skodd-db:
